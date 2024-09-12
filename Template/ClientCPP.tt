@@ -17,11 +17,12 @@ foreach(GrpcService service in s.ServiceArray)
 foreach (GrpcServiceMethod method in service.MethodArray)
 {
 #>
-FGrpcContextHandle U<#=service.Name#>Client::Init<#=method.Name#>(FGrpcMetaData MetaData)
+FGrpcContextHandle U<#=service.Name#>Client::Init<#=method.Name#>(<#if(method.ClientStreaming) {#>FGrpcMetaData MetaData<#}#>)
 {
 	FGrpcContextHandle handle = Service->TurboLinkManager->GetNextContextHandle();
 	auto context = UGrpcClient::MakeContext<GrpcContext_<#=service.Name#>_<#=method.Name#>>(handle);
 	context->RpcContext = UTurboLinkGrpcManager::Private::CreateRpcClientContext();
+<#if(method.ClientStreaming) {#>
 	for (const auto& metaDataPair : MetaData.MetaData)
 	{
 		context->RpcContext->AddMetadata(
@@ -29,7 +30,6 @@ FGrpcContextHandle U<#=service.Name#>Client::Init<#=method.Name#>(FGrpcMetaData 
 			(const char*)StringCast<UTF8CHAR>(*(metaDataPair.Value)).Get()
 		);
 	}
-<#if(method.ClientStreaming) {#>
 	context->Init();
 <#}#>
 	return context->GetHandle();
